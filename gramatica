@@ -15,13 +15,10 @@ DECVAR -> VARIAVEL . DECVAR
 DECVAR -> ''
 
 VARIAVEL -> TIPO : LISTAIDS
-VARIAVEL -> VET TIPO : ID INT
+VARIAVEL -> VET TIPO : ID VALOR
 
 VARIAVELU -> TIPO : ID
-VARIAVELU -> VET TIPO : ID INT
-
-TIPO -> INTEIRO
-TIPO -> REAL
+VARIAVELU -> VET TIPO : ID VALOR
 
 LISTAIDS -> ID SEMICOMMAID
 
@@ -34,9 +31,6 @@ VECTORORNOT -> [ EXPA ]
 VECTORORNOT -> ''
 
 EXPA -> OPERANDO1 EXP1
-
-VALOR -> INT
-VALOR -> FLOAT
 
 CFC -> CF .
 
@@ -72,10 +66,6 @@ OPERANDO2 -> DEEPEXPA
 EXP2 -> OP2 OPERANDO2 EXP2
 EXP2 -> ''
 
-OP2 -> *
-OP2 -> /
-OP2 -> %
-
 DEEPEXPA -> OPERANDO3 EXP3
 
 OPERANDO3 -> OPERANDOEXPA
@@ -94,13 +84,6 @@ MINUSORNOT -> ''
 EXPRC -> EXPR NR1
 
 EXPR -> EXPA OPR EXPA
-
-OPR -> <
-OPR -> >
-OPR -> <=
-OPR -> >=
-OPR -> = 
-OPR -> <>
 
 NR1 -> | NR2A
 NR1 -> NR2B
@@ -154,3 +137,7 @@ RECEBACONTEUDO -> ( EXPA )
 // Chamadas de funcoes podem receber como parametro chamadas de outras funcoes?
 // O tipo real tem precedencia maior do que o tipo inteiro em expa
 // Ambiguidade em CODIGO -> gramatica
+// TIPO é INTEIRO ou REAL
+// VALOR é constante numérica
+// OP2 é / % ou *
+// OPR é = < > <= >= <>

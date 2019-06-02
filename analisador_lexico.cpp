@@ -11,7 +11,7 @@ using namespace std;
 
 struct token {
   string valor;
-  string categoria; //// SR, PR, ID, NUM, TEXTO
+  string categoria;
 };
 
 int linha = 1;
@@ -38,7 +38,6 @@ void texto(string termo){
 				linha--;
 				erro(aux);
 			}
-	        //cout << "erro string n fechada\n";
 			return ;
 	    }
 
@@ -56,7 +55,6 @@ void texto(string termo){
 				else {
 					linha--;
 					erro(aux);
-					//cout << "erro string tamanho c enter\n";
 					linha++;
 				}
 				return ;
@@ -111,7 +109,7 @@ void num(string termo){
 			return ;
 		}
 		else {
-			armazenamento(acc, "NUM");
+			armazenamento(acc, "VALOR");
 			return ;
 		}
 	}
@@ -160,7 +158,15 @@ void armazenamento(string termo, string tipo){
 void estadozero(string termo){
 	while((unsigned) referencia < termo.size()){
 		if( termo[referencia] == '.' || termo[referencia] == ':' || termo[referencia] == ';' || termo[referencia] == '+' || termo[referencia] == '-' || termo[referencia] == '/' || termo[referencia] == '%' || termo[referencia] == '(' || termo[referencia] == ')' || termo[referencia] == '[' || termo[referencia] == ']' || termo[referencia] == '=' || termo[referencia] == '&' || termo[referencia] == '|' || termo[referencia] == '!' ){
-			armazenamento(string(1, termo[referencia]), "SR");
+			if(termo[referencia] == '/' || termo[referencia] == '%' ){
+				armazenamento(string(1, termo[referencia]), "OP2");
+			}
+			else if(termo[referencia] == '=') {
+				armazenamento(string(1, termo[referencia]), "OPR");
+			}
+			else{
+				armazenamento(string(1, termo[referencia]), string(1, termo[referencia]));
+			}
 			coluna++;
 			referencia++;
     	}
@@ -170,21 +176,21 @@ void estadozero(string termo){
 			referencia++;
 
         	if(termo[referencia] == '-'){ 
-				armazenamento("<-", "SR");
+				armazenamento("<-", "<-");
 				coluna++;
 				referencia++;
         	}
         	else if(termo[referencia] == '='){ 
-				armazenamento("<=", "SR");
+				armazenamento("<=", "OPR");
 				coluna++;
 				referencia++;
         	}
         	else if(termo[referencia] == '>'){ 
-				armazenamento("<>", "SR");
+				armazenamento("<>", "OPR");
 				coluna++;
 				referencia++;
         	}
-        	else armazenamento("<", "SR");
+        	else armazenamento("<", "OPR");
       	}
 
 		else if( termo[referencia] == '*'){
@@ -192,11 +198,11 @@ void estadozero(string termo){
 			referencia++;
 
 			if(termo[referencia] == '*'){ 
-				armazenamento("**", "SR");
+				armazenamento("**", "**");
 				coluna++;
 				referencia++;
 			}
-			else armazenamento("*", "SR");
+			else armazenamento("*", "OP2");
         }
       
 		else if( termo[referencia] == '>'){
@@ -204,11 +210,11 @@ void estadozero(string termo){
 			referencia++;
 
 			if(termo[referencia] == '='){ 
-				armazenamento(">=", "SR");
+				armazenamento(">=", "OPR");
 				coluna++;
 				referencia++;
 			}
-			else armazenamento(">", "SR");
+			else armazenamento(">", "OPR");
 		}
 
 		else if( termo[referencia] == 9 || termo[referencia] == 32){
@@ -233,18 +239,18 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 2), "PR");
+				armazenamento(termo.substr(referencia, 2), termo.substr(referencia, 2));
 				coluna+=2;
 				referencia+=2;
 			} 
       	}
 
-		else if(termo.substr(referencia, 3) == "BIT" || termo.substr(referencia, 3) == "FIM" || termo.substr(referencia, 3) == "VAR" || termo.substr(referencia, 3) == "VET"){
+		else if(termo.substr(referencia, 3) == "FIM" || termo.substr(referencia, 3) == "VAR" || termo.substr(referencia, 3) == "VET"){
 			if(azAZ09(termo[referencia+3], true, true)){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 3), "PR");
+				armazenamento(termo.substr(referencia, 3), termo.substr(referencia, 3));
 				coluna+=3;
 				referencia+=3;
 			} 
@@ -255,7 +261,13 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 4), "PR");
+				if(termo.substr(referencia, 4) == "REAL"){
+					armazenamento(termo.substr(referencia, 4), "TIPO");
+				}
+				else{
+					armazenamento(termo.substr(referencia, 4), termo.substr(referencia, 4));
+				}
+				
 				coluna+=4;
 				referencia+=4;
 			} 
@@ -266,7 +278,7 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 5), "PR");
+				armazenamento(termo.substr(referencia, 5), termo.substr(referencia, 5));
 				coluna+=5;
 				referencia+=5;
 			} 
@@ -277,7 +289,7 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 6), "PR");
+				armazenamento(termo.substr(referencia, 6), termo.substr(referencia, 6));
 				coluna+=6;
 				referencia+=6;
 			} 
@@ -288,7 +300,12 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 7), "PR");
+				if(termo.substr(referencia, 7) == "INTEIRO"){
+					armazenamento(termo.substr(referencia, 7), "TIPO");
+				}
+				else{
+					armazenamento(termo.substr(referencia, 7), "ESCREVA");
+				}
 				coluna+=7;
 				referencia+=7;
 			} 
@@ -299,7 +316,7 @@ void estadozero(string termo){
 				id(termo);
 			}
 			else{
-				armazenamento(termo.substr(referencia, 8), "PR");
+				armazenamento(termo.substr(referencia, 8), termo.substr(referencia, 8));
 				coluna+=8;
 				referencia+=8;
 			} 
