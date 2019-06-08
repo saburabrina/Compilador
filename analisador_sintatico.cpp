@@ -274,21 +274,31 @@ void analise_lexica(string termo){
 		}
 	}
 }
+vector <pair<string, size_t> > create_pair(){
+	vector <pair<string, size_t> > gramatica;
+	string txt[92] = {"PROGRAMA", "DECVAR", "DECVAR", "DECVAR", "VARID", "VARIDS", "VARVET", "VARVETPASS", "LISTAIDS", "SEMICOMMAID", "SEMICOMMAID", "PROTEFUNCOES", "PROTEFUNCOES", "CABECALHOFUNCAO", "LISTAVAR", "LISTAVAR", "VARX", "VARX", "SEMICOMMAVAR", "SEMICOMMAVAR", "RETORNO", "RETORNO", "PF", "PF", "FESCOPO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "MEIOT1", "MEIOT1", "ATR", "EXPA", "EXP1", "EXP1", "OP1", "OP1", "SUBEXPA",  "EXP2", "EXP2", "DEEPEXPA", "EXP3", "EXP3", "DEEPEREXPA", "DEEPEREXPA", "EXP4", "EXP4", "EXP4", "MEIOT2", "MEIOT2", "CF", "LISTAELEM", "LISTAELEM", "SEMICOMMAELEM", "SEMICOMMAELEM", "DC", "EXPRC", "MT", "EXPR", "NR1", "NR1", "NR1", "NR2A", "NR2B", "NR3", "NR3", "NR4", "NR4", "ELSE", "ELSE", "LOOP", "LOOP", "LEITURA", "ESCRITA", "LISTAIDSCV", "SEMICOMMAIDCV", "SEMICOMMAIDCV", "LISTAA", "SEMICOMMAA", "SEMICOMMAA", "ELEM", "ELEM", "CMDRECEBA", "VECTORORNOT", "VECTORORNOT", "RECEBACONTEUDO", "RECEBACONTEUDO", "REPORFIM", "REPORFIM"};
+	size_t tamanhos[92] = {3, 3, 3, 0, 3, 3, 5, 4, 2, 3, 0, 2, 0, 7, };
+	for (int i = 0; i < 93; ++i){
+		pair<string, size_t> x = make_pair(txt[i], );
+		gramatica.push_back(x);
+	}
+	return gramatica;
+}
 void analise_sintatica(){
 	size_t estado = 0;
 	map<string,string> lr_table[];
 	stack<string> pilha;
-	pair<string, size_t> reducoes[];
+	vector <pair<string, size_t> > reducoes = create_pair();
 	string variavel = tokens[i].categoria;
 	string transicao = (lr_table[estado])[variavel];
 	int i = 0;
-	while (i < tokens.size()){	
+	while (transicao != "acc"){	
 		if (transicao.at(0) == 's'){
 			pilha.push(variavel); // empilha o token
 			pilha.push(transicao.substr(1)); // empilha o novo estado
 			i++; // incrementa o ponteiro para o token
 			estado = stoi(transicao.substr(1)); // atualiza o estado
-			variavel = tokens[i].categoria; // atualiza o token
+			variavel = tokens[i].categoria; // atualiza o token (T)
 			transicao = (lr_table[estado])[variavel]; // atualiza a transição
 		} else if (transicao.at(0) == 'r'){
 			size_t reducao = stoi(transicao.substr(1));
@@ -296,24 +306,28 @@ void analise_sintatica(){
 			for (int j = 0; (unsigned) i < r; ++i){
 				pilha.pop(); // dá pop na pilha duas vezes o tamanho da transição
 			}
-			estado = stoi(pilha.top());
-			variavel = reducoes[reducao].first;
-			pilha.push(variavel);
-			transicao = (lr_table[estado])[variavel];
+			estado = stoi(pilha.top()); // atualiza o estado
+			variavel = reducoes[reducao].first; // atualiza a variavel (NT)
+			pilha.push(variavel); // empilha a redução
+			transicao = (lr_table[estado])[variavel]; // atualiza a transição
 		} else {
-			pilha.push(transicao);
-			estado = stoi(transicao);
-			variavel = tokens[i].categoria;
-			transicao = (lr_table[estado])[variavel];
+			pilha.push(transicao); // empilha novo estado
+			estado = stoi(transicao); // atualiza estado
+			variavel = tokens[i].categoria; // atualiza o token (T)
+			transicao = (lr_table[estado])[variavel]; // atualiza a transição
 		}
+		if (transição == " ") break;
 	}
+	if (transicao != "acc") cout << "NO";
+	else cout << "YES";
 }
 int main (){
   	char termoaux[MAXFILE];
   	string termo = "";
   	fread (termoaux, 1, MAXFILE, stdin);
   	termo = string(termoaux);
-	for(int i = 0; (unsigned) i < termo.size(); i++){
+  	int i;
+	for(i = 0; (unsigned) i < termo.size(); i++){
 		if(termo[i] < 9 || (termo[i] > 10 && termo[i] < 32) || termo[i] > 126){
 			cout << ARQINV;
 			break;
