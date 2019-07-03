@@ -66,7 +66,7 @@ NR1 -> NR2B NR1
 NR1 -> ''
 NR2A -> NR3
 NR2B -> & NR3
-NR3 -> ! NR4
+NR3 -> ! NR3
 NR3 -> NR4
 NR4 -> ( MT )
 NR4 -> EXPR
@@ -96,3 +96,4 @@ REPORFIM -> ''
 // VALOR é constante numérica
 // OP2 é / % ou *
 // OPR é = < > <= >= <>
+// TEXTO é string

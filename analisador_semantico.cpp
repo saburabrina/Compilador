@@ -4,25 +4,44 @@
 #include <map>
 #include <stack>
 #include <utility>
+#include <set>
 #define ARQINV "ARQUIVO INVALIDO\n"
 #define OK "OK\n"
 #define MAX 512
 #define MAXFILE 131072
 using namespace std;
+//variaveis globais
 struct token {
-	string valor;
-	string categoria;
+	string valor = "";
+	string categoria = "";
+	token *pai = NULL;
+	vector<token *> filhos;
 };
 int linha=1;
 int coluna=1;
 int referencia=0;
 bool no_lexical_errors=true;
+bool no_sintatical_errors=true;
 vector<token> tokens;
+string tipo, nome;
+token *root = new token();
+map<int, vector<pair<string, string> > > escopo_local;
+int escopo = 0;
+set<string> tsv;
+set<string> tsf;
+bool funcao_nao_declarada;
+bool variavel_nao_declarada;
+bool funcao_redeclarada;
+bool variavel_redeclarada;
+bool conflito_var_func;
+bool func;
+//prototipos
 void geracao_tokens(string termo, string tipo);
 bool azAZ09(char a, bool letra, bool number);
 void id(string termo);
 void erro_lexico(int coluna);
 void num(string termo);
+//funcoes
 void texto(string termo){
 	string acc = "";
 	int aux;
@@ -355,7 +374,7 @@ vector<map<string,string> > create_lr_table(){
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "s113", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "r60", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", "r65", " ", " ", "r65", " ", " ", " ", " ", " ", " ", " ", " ", " ", "s115", "s117", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "114", " ", "116", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
-		{" ", " ", " ", "s90", " ", "s89", " ", " ", "s81", " ", " ", " ", " ", " ", " ", " ", " ", "s87", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "83", " ", " ", "84", " ", "85", " ", "86", "88", " ", " ", " ", " ", " ", " ", " ", "82", " ", " ", " ", " ", "118", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
+		{" ", " ", " ", "s90", " ", "s89", " ", " ", "s81", " ", " ", " ", " ", " ", " ", " ", " ", "s87", " ", " ", " ", " ", " ", " ", "s79", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "83", " ", " ", "84", " ", "85", " ", "86", "88", " ", " ", " ", " ", " ", " ", " ", "82", " ", " ", " ", "118", "80", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", "r69", " ", " ", "r69", " ", " ", " ", " ", " ", " ", " ", " ", " ", "r69", "r69", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", "s90", " ", "s89", " ", " ", "s81", " ", " ", " ", " ", " ", " ", " ", " ", "s87", " ", " ", " ", " ", " ", " ", "s79", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "120", " ", " ", "84", " ", "85", " ", "86", "88", " ", " ", " ", " ", " ", " ", "119", "82", " ", " ", " ", "78", "80", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", "r71", " ", " ", "r71", " ", " ", " ", " ", " ", " ", " ", " ", " ", "r71", "r71", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
@@ -470,7 +489,7 @@ vector<map<string,string> > create_lr_table(){
 		{" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "s193", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", "r72", " ", " ", " ", " ", " ", " ", " ", " ", " ", "r72", "r72", " ", " ", " ", " ", " ", "r72", " ", " ", " ", " ", " ", "r72", "r72", " ", " ", "r72", "r72", " ", "r72", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "},
 		{" ", " ", " ", "r75", " ", " ", " ", " ", " ", " ", " ", " ", " ", "r75", "r75", " ", " ", " ", " ", " ", "r75", " ", " ", " ", " ", " ", "r75", "r75", " ", " ", "r75", "r75", " ", "r75", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "}
-	};
+			};
 	vector<map<string,string> > lr_table;
 	lr_table.resize(194);
 	for (int i = 0; i <= 193; ++i){
@@ -487,7 +506,7 @@ vector<map<string,string> > create_lr_table(){
 vector <pair<string, vector<string> > > create_gramatica(){
 	vector <pair<string, vector<string> > > gramatica;
 	string txt[93] = {"PROGRAMA", "DECVAR", "DECVAR", "DECVAR", "VARID", "VARIDS", "VARVET", "VARVETPASS", "LISTAIDS", "SEMICOMMAID", "SEMICOMMAID", "PROTEFUNCOES", "PROTEFUNCOES", "CABECALHOFUNCAO", "LISTAVAR", "LISTAVAR", "VARX", "VARX", "SEMICOMMAVAR", "SEMICOMMAVAR", "RETORNO", "RETORNO", "PF", "PF", "FESCOPO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "CODIGO", "MEIOT1", "MEIOT1", "ATR", "EXPA", "EXP1", "EXP1", "OP1", "OP1", "SUBEXPA",  "EXP2", "EXP2", "DEEPEXPA", "EXP3", "EXP3", "DEEPEREXPA", "DEEPEREXPA", "EXP4", "EXP4", "EXP4", "MEIOT2", "MEIOT2", "CF", "LISTAELEM", "LISTAELEM", "SEMICOMMAELEM", "SEMICOMMAELEM", "DC", "EXPRC", "MT", "EXPR", "NR1", "NR1", "NR1", "NR2A", "NR2B", "NR3", "NR3", "NR4", "NR4", "ELSE", "ELSE", "LOOP", "LOOP", "LEITURA", "ESCRITA", "LISTAIDSCV", "SEMICOMMAIDCV", "SEMICOMMAIDCV", "LISTAA", "SEMICOMMAA", "SEMICOMMAA", "ELEM", "ELEM", "CMDRECEBA", "VECTORORNOT", "VECTORORNOT", "RECEBACONTEUDO", "RECEBACONTEUDO", "REPORFIM", "REPORFIM"};
-	vector<string> transicao[93] = {{"DECVAR", "PROTEFUNCOES", "FESCOPO"}, {"VARIDS", ".", "DECVAR"}, {"VARVET", ".", "DECVAR"}, {}, {"TIPO", ":", "ID"}, {"TIPO", ":", "LISTAIDS"}, {"VET", "TIPO", ":", "ID", "VALOR"}, {"VET", "TIPO", ":", "ID"}, {"ID", "SEMICOMMAID"}, {";", "ID", "SEMICOMMAID"}, {}, {"CABECALHOFUNCAO", "PF"}, {}, {"FUNCAO", "ID", "(", "LISTAVAR", ")", ":", "RETORNO"}, {"VARX", "SEMICOMMAVAR"}, {}, {"VARID"}, {"VARVETPASS"}, {";", "VARX", "SEMICOMMAVAR"}, {}, {"TIPO"}, {"NULO"}, {".", "PROTEFUNCOES"}, {"FESCOPO", "REPORFIM"}, {"VAR", "DECVAR", "INICIO", "CODIGO", "FIM"},  {}, {"ID", "MEIOT1", "CODIGO"}, {"DC", "CODIGO"}, {"LOOP", "CODIGO"},  {"LEITURA", "CODIGO"}, {"ESCRITA", "CODIGO"}, {"PARE", ".", "CODIGO"}, {"CMDRECEBA", "CODIGO"}, {"ATR"}, {"CF", "."}, {"VECTORORNOT", "<-", "EXPA", "."}, {"SUBEXPA", "EXP1"}, {"OP1", "SUBEXPA", "EXP1"}, {}, {"+"}, {"-"}, {"DEEPEXPA", "EXP2"}, {"OP2", "DEEPEXPA", "EXP2"}, {}, {"DEEPEREXPA", "EXP3"}, {"**", "DEEPEREXPA", "EXP3"}, {}, {"-", "EXP4"}, {"EXP4"}, {"(", "EXPA", ")"}, {"VALOR"}, {"ID", "MEIOT2"}, {"CF"}, {"VECTORORNOT"}, {"(", "LISTAELEM", ")"}, {"EXPA", "SEMICOMMAELEM"}, {}, {";", "EXPA", "SEMICOMMAELEM"}, {}, {"SE", "EXPRC", "INICIO", "CODIGO", "FIM", "ELSE"}, {"MT"}, {"NR3", "NR1"}, {"EXPA", "OPR", "EXPA"}, {"|", "NR2A", "NR1"}, {"NR2B", "NR1"}, {}, {"NR3"}, {"&", "NR3"}, {"!", "NR4"}, {"NR4"}, {"(", "MT", ")"}, {"EXPR"}, {"SENAO", "INICIO", "CODIGO", "FIM"}, {}, {"ENQUANTO", "EXPRC", "INICIO", "CODIGO", "FIM"}, {"PARA", "ID", "DE", "EXPA", "ATEH", "EXPA", "INICIO", "CODIGO", "FIM"}, {"LEIA", "LISTAIDSCV", "."}, {"ESCREVA", "LISTAA", "."}, {"ID", "VECTORORNOT", "SEMICOMMAIDCV"}, {";", "ID", "VECTORORNOT", "SEMICOMMAIDCV"}, {} , {"ELEM", "SEMICOMMAA"}, {";", "ELEM", "SEMICOMMAA"}, {}, {"EXPA"}, {"TEXTO"}, {"RECEBA", "RECEBACONTEUDO", "."}, {"[", "EXPA", "]"}, {}, {}, {"(", "EXPA", ")"}, {"CABECALHOFUNCAO", "FESCOPO", "REPORFIM"}, {}};
+	vector<string> transicao[93] = {{"DECVAR", "PROTEFUNCOES", "FESCOPO"}, {"VARIDS", ".", "DECVAR"}, {"VARVET", ".", "DECVAR"}, {}, {"TIPO", ":", "ID"}, {"TIPO", ":", "LISTAIDS"}, {"VET", "TIPO", ":", "ID", "VALOR"}, {"VET", "TIPO", ":", "ID"}, {"ID", "SEMICOMMAID"}, {";", "ID", "SEMICOMMAID"}, {}, {"CABECALHOFUNCAO", "PF"}, {}, {"FUNCAO", "ID", "(", "LISTAVAR", ")", ":", "RETORNO"}, {"VARX", "SEMICOMMAVAR"}, {}, {"VARID"}, {"VARVETPASS"}, {";", "VARX", "SEMICOMMAVAR"}, {}, {"TIPO"}, {"NULO"}, {".", "PROTEFUNCOES"}, {"FESCOPO", "REPORFIM"}, {"VAR", "DECVAR", "INICIO", "CODIGO", "FIM"},  {}, {"ID", "MEIOT1", "CODIGO"}, {"DC", "CODIGO"}, {"LOOP", "CODIGO"},  {"LEITURA", "CODIGO"}, {"ESCRITA", "CODIGO"}, {"PARE", ".", "CODIGO"}, {"CMDRECEBA", "CODIGO"}, {"ATR"}, {"CF", "."}, {"VECTORORNOT", "<-", "EXPA", "."}, {"SUBEXPA", "EXP1"}, {"OP1", "SUBEXPA", "EXP1"}, {}, {"+"}, {"-"}, {"DEEPEXPA", "EXP2"}, {"OP2", "DEEPEXPA", "EXP2"}, {}, {"DEEPEREXPA", "EXP3"}, {"**", "DEEPEREXPA", "EXP3"}, {}, {"-", "EXP4"}, {"EXP4"}, {"(", "EXPA", ")"}, {"VALOR"}, {"ID", "MEIOT2"}, {"CF"}, {"VECTORORNOT"}, {"(", "LISTAELEM", ")"}, {"EXPA", "SEMICOMMAELEM"}, {}, {";", "EXPA", "SEMICOMMAELEM"}, {}, {"SE", "EXPRC", "INICIO", "CODIGO", "FIM", "ELSE"}, {"MT"}, {"NR3", "NR1"}, {"EXPA", "OPR", "EXPA"}, {"|", "NR2A", "NR1"}, {"NR2B", "NR1"}, {}, {"NR3"}, {"&", "NR3"}, {"!", "NR3"}, {"NR4"}, {"(", "MT", ")"}, {"EXPR"}, {"SENAO", "INICIO", "CODIGO", "FIM"}, {}, {"ENQUANTO", "EXPRC", "INICIO", "CODIGO", "FIM"}, {"PARA", "ID", "DE", "EXPA", "ATEH", "EXPA", "INICIO", "CODIGO", "FIM"}, {"LEIA", "LISTAIDSCV", "."}, {"ESCREVA", "LISTAA", "."}, {"ID", "VECTORORNOT", "SEMICOMMAIDCV"}, {";", "ID", "VECTORORNOT", "SEMICOMMAIDCV"}, {} , {"ELEM", "SEMICOMMAA"}, {";", "ELEM", "SEMICOMMAA"}, {}, {"EXPA"}, {"TEXTO"}, {"RECEBA", "RECEBACONTEUDO", "."}, {"[", "EXPA", "]"}, {}, {}, {"(", "EXPA", ")"}, {"CABECALHOFUNCAO", "FESCOPO", "REPORFIM"}, {}};
 	for (int i = 0; i < 93; ++i){
 		pair<string, vector<string> > x = make_pair(txt[i], transicao[i]);
 		gramatica.push_back(x);
@@ -503,43 +522,164 @@ void imprimir_gramatica(vector <pair<string, vector<string> > > gramatica){
 		cout << endl;
 	}
 }
+token *create_node(string v, string c){
+	token *aux = new token();
+	aux->valor = v;
+	aux->categoria = c;
+
+	return aux;
+}
 void analise_sintatica(){
 	int estado = 0;
 	vector<map<string,string> > lr_table = create_lr_table();
 	vector <pair<string, vector<string> > > reducoes = create_gramatica();
-	stack<string> pilha;
-	pilha.push("0");
-	string variavel = tokens[0].categoria;
-	string transicao = (lr_table[estado])[variavel];
+	stack<token *> pilha;
+	token *variavel = new token();
+	variavel->categoria = "0";
+	pilha.push(variavel);
+	variavel = create_node(tokens[0].valor, tokens[0].categoria);
+	string transicao = (lr_table[estado])[variavel->categoria];
 	int i = 0;
 	while (transicao != "acc"){	
 		if (transicao == " ") break;
 		if (transicao.at(0) == 's'){
-			pilha.push(variavel); // empilha o token
-			pilha.push(transicao.substr(1)); // empilha o novo estado
-			i++; // incrementa o ponteiro para o token
-			estado = stoi(transicao.substr(1)); // atualiza o estado
-			variavel = tokens[i].categoria; // atualiza o token (T)
-			transicao = (lr_table[estado])[variavel]; // atualiza a transição
+			pilha.push(variavel); 
+			variavel = create_node("", transicao.substr(1));
+			pilha.push(variavel); 
+			i++; 
+			estado = stoi(transicao.substr(1));
+			variavel = create_node(tokens[i].valor, tokens[i].categoria);
+			transicao = (lr_table[estado])[variavel->categoria]; 
 		} else if (transicao.at(0) == 'r'){
 			int reducao = stoi(transicao.substr(1));
 			int r = reducoes[reducao].second.size()*2;
+			variavel = create_node("", reducoes[reducao].first); 
 			for (int j = 0; (unsigned) j < r; ++j){
-				pilha.pop(); // dá pop na pilha duas vezes o tamanho da transição
-			}
-			estado = stoi(pilha.top()); // atualiza o estado
-			variavel = reducoes[reducao].first; // atualiza a variavel (NT)
-			pilha.push(variavel); // empilha a redução
-			transicao = (lr_table[estado])[variavel]; // atualiza a transição
+				if (j%2!=0){
+					token* a = new token();
+					a = pilha.top();
+					a->pai = variavel;
+					(variavel->filhos).push_back(a);
+				}
+				pilha.pop(); 
+			}		
+			estado = stoi(pilha.top()->categoria);
+			pilha.push(variavel); 
+			transicao = (lr_table[estado])[variavel->categoria]; 
 		} else {
-			pilha.push(transicao); // empilha novo estado
-			estado = stoi(transicao); // atualiza estado
-			variavel = tokens[i].categoria; // atualiza o token (T)
-			transicao = (lr_table[estado])[variavel]; // atualiza a transição
+			variavel = create_node("", transicao);
+			pilha.push(variavel); 
+			estado = stoi(transicao); 
+			variavel = create_node(tokens[i].valor, tokens[i].categoria);
+			transicao = (lr_table[estado])[variavel->categoria]; 
 		}
 	}
-	if (transicao != "acc") cout << "NO\n";
-	else cout << "YES\n";
+	if (transicao != "acc") {
+		cout << "NO\n";
+		no_sintatical_errors = false;
+		return;
+	}
+	int j = 0;
+	while(pilha.top()->categoria != "0"){
+		if (j%2!=0){
+			token* a = new token();
+			a = pilha.top();
+			a->pai = root;
+			(root->filhos).push_back(a);
+		}
+		pilha.pop();
+		j++;
+	}
+}
+void dfs(token *nodo){
+	if (nodo->categoria == "VARIDS" || nodo->categoria == "VARVET" || nodo->categoria == "LISTAVAR"){
+		tipo = "var";
+		if (nodo->categoria == "LISTAVAR") escopo++;
+	}
+	else if (nodo->categoria == "CABECALHOFUNCAO"){
+		tipo = "func";
+		func = true;
+	}
+	else if (nodo->categoria == "INICIO"){
+		if(!func) escopo++;
+		else func = false;
+	}
+	else if (nodo->categoria == "CODIGO"){
+		tipo = "";
+	}
+	else if (nodo->categoria == "FIM"){
+		for (int i = 0; i < escopo_local[escopo].size(); ++i){
+			pair<string,string> elemento = escopo_local[escopo][i];
+			if (elemento.second == "var") tsv.erase(elemento.first);
+			else tsf.erase(elemento.first);
+		}
+		escopo_local.erase(escopo);
+		escopo--;	
+	}
+	else if (nodo->categoria == "ID"){ //checar declaraç~oes
+		if (tipo == ""){
+			nome = nodo->valor;
+		}
+		else{
+			set<string>:: iterator it;
+			it = tsv.find(nodo->valor);
+			if (tipo == "var") {
+				if (it!=tsv.end()) variavel_redeclarada = true;
+				else{
+					tsv.insert(nodo->valor);
+					escopo_local[escopo].push_back(make_pair(nodo->valor, "var"));
+				}
+			}
+			else{
+				if (it!=tsv.end()) conflito_var_func = true;
+			}
+			it = tsf.find(nodo->valor);
+			if (tipo == "func") {
+				if (it!=tsf.end()) funcao_redeclarada = true;
+				else{
+					tsf.insert(nodo->valor);
+					escopo_local[escopo].push_back(make_pair(nodo->valor, "func"));
+				}
+			}
+			else{
+				if (it!=tsf.end()) conflito_var_func = true;
+			}
+		}
+	}
+	else if (tipo == "" && nome!=""){ //checar uso
+		set<string>:: iterator it; 
+		if (nodo->categoria == "CF"){
+			it = tsf.find(nome);
+			if (it==tsf.end()) funcao_nao_declarada = true;
+			nome = "";
+		}
+		else if (nodo->categoria == "ATR" || nodo->categoria == "VECTORORNOT" || nodo->categoria == "DE"){
+			it = tsv.find(nome);
+			if (it==tsv.end()) variavel_nao_declarada = true;
+			nome = "";
+		}
+	}
+	for (int i = (nodo->filhos).size()-1; i >=0; i--){
+		dfs( (nodo->filhos)[i] );
+	}
+}
+void analise_semantica(){
+	funcao_nao_declarada = false;
+	variavel_nao_declarada = false;
+	funcao_redeclarada = false;
+	variavel_redeclarada = false;
+	conflito_var_func = false;
+	func = false;
+	tipo = "";
+	nome = "";
+	dfs(root);
+
+	bool erros[5] = {funcao_nao_declarada, variavel_nao_declarada, funcao_redeclarada, variavel_redeclarada, conflito_var_func};
+		
+	for (int i = 0; i < 5; ++i){
+		if (erros[i]) cout << "YES\n";
+		else cout << "NO\n";
+	}
 }
 int main (){
   	char termoaux[MAXFILE];
@@ -558,6 +698,7 @@ int main (){
 		if(no_lexical_errors){
 			geracao_tokens("FIM DA ENTRADA", "$");
 			analise_sintatica();
+			if (no_sintatical_errors) analise_semantica();
 		}
 	}
 }
